@@ -1,0 +1,38 @@
+dnf install -y curl tar git
+🔹 2️⃣ Install Helm (Official Method)
+Download & Install
+curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+
+🔹 3️⃣ Fix PATH (If Needed)
+
+Check PATH:
+echo $PATH
+
+
+If /usr/local/bin is missing, add it:
+
+export PATH=$PATH:/usr/local/bin
+echo 'export PATH=$PATH:/usr/local/bin' >> ~/.bashrc
+source ~/.bashrc
+
+🔹 4️⃣ Verify Installation
+helm version
+
+Expected output:
+version.BuildInfo{Version:"v3.x.x"...}
+
+
+
+If it displays command help → success.
+
+🔹 7️⃣ If Installing in Production (Recommended)
+
+Lock version explicitly instead of using script:
+
+curl -LO https://get.helm.sh/helm-v3.20.0-linux-amd64.tar.gz
+tar -zxvf helm-v3.20.0-linux-amd64.tar.gz
+mv linux-amd64/helm /usr/local/bin/helm
+chmod +x /usr/local/bin/helm
+helm version
+
