@@ -20,31 +20,35 @@ EOF
 sudo sysctl --system
 
 
+ ### 1.4 Install CRI-O
 
-### 1.4 Install CRI-O 1.28
-export VERSION=1.28
-export OS=CentOS_8_Stream
-
-curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable.repo https://download.opensuse.org/repositories/devel:/kubic:/libcontainers:/stable/$OS/devel:kubic:libcontainers:stable.repo
-curl -L -o /etc/yum.repos.d/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo https://download.opensuse.org/repositories/devel:kubic:libcontainers:stable:cri-o:$VERSION/$OS/devel:kubic:libcontainers:stable:cri-o:$VERSION.repo
-
-sudo dnf install -y cri-o
-sudo systemctl enable --now crio
+rpm --import https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.32/rpm/repodata/repomd.xml.key
+cat <<EOF | tee /etc/yum.repos.d/cri-o.repo
+[cri-o]
+name=CRI-O
+baseurl=https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.32/rpm/
+enabled=1
+gpgcheck=1
+gpgkey=https://pkgs.k8s.io/addons:/cri-o:/stable:/v1.32/rpm/repodata/repomd.xml.key
+EOF
+dnf install -y cri-o
+systemctl enable --now crio
+systemctl status crio
 
 
 ### 1.5 Install kubeadm, kubelet, kubectl 1.28.15
 
-cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
+rpm --import https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
+cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
 [kubernetes]
 name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+baseurl=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/
 enabled=1
 gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+gpgkey=https://pkgs.k8s.io/core:/stable:/v1.32/rpm/repodata/repomd.xml.key
 EOF
-
-sudo dnf install -y kubelet-1.28.15 kubeadm-1.28.15 kubectl-1.28.15 --disableexcludes=kubernetes
-sudo systemctl enable kubelet
+dnf install -y kubelet kubeadm kubectl
+systemctl enable kubelet
 
 
 ### 1.6 Verify installations
