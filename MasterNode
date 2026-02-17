@@ -78,11 +78,6 @@ kubectl version --client
 
 
 
-
-
-
-
-
 kubeadm init \
   --kubernetes-version=v1.32.12 \
   --control-plane-endpoint=k8s.religareonline.com:6443 \
@@ -90,3 +85,16 @@ kubeadm init \
   --cri-socket=unix:///var/run/crio/crio.sock \
   --apiserver-advertise-address=10.150.66.71 \
   --upload-certs 2>&1 | tee ~/kubeadm-init.log
+
+# Download Calico manifest
+curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.29.0/manifests/calico.yaml
+
+# Set your pod CIDR 10.200.0.0/16
+sed -i 's|# - name: CALICO_IPV4POOL_CIDR|- name: CALICO_IPV4POOL_CIDR|' calico.yaml
+sed -i 's|#   value: "192.168.0.0/16"|  value: "10.200.0.0/16"|' calico.yaml
+
+# Verify the change was applied
+grep -A1 'CALICO_IPV4POOL_CIDR' calico.yaml
+
+# Apply Calico
+kubectl apply -f calico.yaml
