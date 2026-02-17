@@ -98,3 +98,7 @@ grep -A1 'CALICO_IPV4POOL_CIDR' calico.yaml
 
 # Apply Calico
 kubectl apply -f calico.yaml
+
+# 1. Label worker nodes
+kubectl label node rblcldkuberw01.rbl.in node-role.kubernetes.io/worker=worker
+kubectl label node rblcldkuberw02.rbl.in node-role.kubernetes.io/worker=worker
