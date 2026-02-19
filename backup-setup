@@ -1,0 +1,2 @@
+/var/lib/etcd                      # etcd Data
+ /etc/kubernetes/manifests/        # menifest files using ectd deployed 
