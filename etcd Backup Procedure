@@ -66,6 +66,8 @@ sudo ETCDCTL_API=3 etcdctl snapshot save \
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
+sudo chown tibuser:tibuser /kubernetes/tools/etcd-restore.sh    # Change Owner to tibuser
+sudo chmod +x /usr/local/bin/etcd-restore.sh                    # 🔧 Make Executable
 
 
 
