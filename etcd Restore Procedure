@@ -1,0 +1,180 @@
+📘 SOP – Kubernetes HA etcd Restore Procedure
+
+(kubeadm-based 3 Control Plane Cluster)
+
+1️⃣ Purpose
+This document describes the complete procedure to restore a Kubernetes High Availability (HA) etcd cluster from a previously taken snapshot stored on shared storage (AWS FSx).
+
+2️⃣ Scope
+Applicable to:
+kubeadm-based Kubernetes cluster
+3 control-plane nodes
+etcd running as static pods
+Snapshot stored on shared storage (/kubernetes/etcd-backups)
+
+3️⃣ Environment Details
+Component	                              Value
+Kubernetes Installation	                kubeadm
+etcd Version	                          3.5.14
+etcd Mode	                              Static Pod
+etcd Data Directory	                    /var/lib/etcd
+Snapshot Location	                      /kubernetes/etcd-backups
+TLS Certificates	                      /etc/kubernetes/pki/etcd/
+
+
+4️⃣ When to Perform Restore
+
+Restore is required if:
+
+etcd data corruption
+Accidental deletion of Kubernetes objects
+All control-plane nodes crash
+Disaster Recovery scenario
+Cluster fails to start due to etcd errors
+
+5️⃣ Pre-Restore Checklist
+
+Before proceeding:
+
+✔ Latest snapshot available and verified
+✔ Snapshot integrity validated using etcdutl snapshot status
+✔ Access to all control-plane nodes
+✔ kubeadm join command available
+✔ Cluster downtime approved
+
+6️⃣ Restore Procedure
+
+STEP 1 – Stop kubelet on ALL Control Plane Nodes
+
+ # Run on all control-plane nodes #
+sudo systemctl stop kubelet
+
+# Verify:Status should be inactive.
+sudo systemctl status kubelet
+
+STEP 2 – Backup Existing etcd Data Directory
+
+On ALL control-plane nodes:
+sudo mv /var/lib/etcd /var/lib/etcd-backup-$(date +%F)
+
+⚠️ Never delete immediately. Always keep old copy until restore is verified.
+
+
+
+STEP 3 – Restore Snapshot on ONE Control Plane Node Only
+
+Choose primary node (example: rblcldkuberm01).
+Run:
+sudo ETCDCTL_API=3 etcdutl snapshot restore \
+/kubernetes/etcd-backups/etcd-YYYY-MM-DD-HH-MM.db \
+--data-dir=/var/lib/etcd
+
+This recreates fresh etcd data directory.
+
+
+STEP 4 – Modify etcd Static Pod Manifest
+
+sudo vi /etc/kubernetes/manifests/etcd.yaml
+
+# Verify or modify:
+--data-dir=/var/lib/etcd
+
+
+Change:
+--initial-cluster-state=existing
+
+TO:
+--initial-cluster-state=new
+
+⚠️ This is critical for full cluster restore. Save and exit.
+
+
+
+STEP 5 – Start kubelet on First Node
+
+sudo systemctl start kubelet
+Wait 30–60 seconds.
+
+## Verify etcd pod:
+
+kubectl get pods -n kube-system | grep etcd
+
+STEP 6 – Verify etcd Health
+
+sudo ETCDCTL_API=3 etcdctl endpoint health \
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key
+
+Expected: healthy
+Cluster is now running with one etcd member.
+
+
+STEP 7 – Rejoin Remaining Control Plane Nodes
+
+On other control-plane nodes:
+
+1️⃣ Remove old etcd directory:
+sudo rm -rf /var/lib/etcd
+2️⃣ Rejoin control plane using saved join command:
+
+kubeadm join k8s.religareonline.com:6443 \
+--token <token> \
+--discovery-token-ca-cert-hash sha256:<hash> \
+--control-plane
+
+Repeat for third node.
+
+
+STEP 8 – Verify Cluster Members
+Run on any control-plane node:
+
+sudo ETCDCTL_API=3 etcdctl member list \
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key
+
+
+Expected: 3 members listed
+
+All in started state
+
+STEP 9 – Validate Kubernetes Cluster
+kubectl get nodes
+kubectl get pods -A
+
+
+Ensure:
+All nodes Ready
+System pods running
+No CrashLoopBackOff
+
+7️⃣ Post-Restore Validation Checklist
+Validation	Command	Expected Result
+etcd healthy	etcdctl endpoint health	healthy
+3 members present	etcdctl member list	3 members
+API server accessible	kubectl get nodes	all Ready
+Workloads restored	kubectl get pods -A	Running
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
