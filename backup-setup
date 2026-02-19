@@ -1,2 +1,3 @@
-/var/lib/etcd                      # etcd Data
- /etc/kubernetes/manifests/        # menifest files using ectd deployed 
+/var/lib/etcd                     # etcd Data
+/etc/kubernetes/manifests/        # menifest files using ectd deployed 
+/etc/kubernetes/pki/etcd/         # etcd certificates  (server.crt | server.key)
