@@ -1,3 +1,55 @@
 /var/lib/etcd                     # etcd Data
 /etc/kubernetes/manifests/        # menifest files using ectd deployed 
 /etc/kubernetes/pki/etcd/         # etcd certificates  (server.crt | server.key)
+
+Server IP : 10.150.66.71
+🕑 Every day at 2 AM
+📦 Snapshot will be taken
+🧹 Old backups >7 days deleted
+📝 Logs stored in /var/log/etcd-backup.log
+
+----------------------------------------------------------------------------------------------------------------------------------
+🔹 Step 1: Download etcd
+ETCD_VER=v3.5.14
+wget https://github.com/etcd-io/etcd/releases/download/${ETCD_VER}/etcd-${ETCD_VER}-linux-amd64.tar.gz
+tar -xvf etcd-${ETCD_VER}-linux-amd64.tar.gz
+cd etcd-${ETCD_VER}-linux-amd64
+
+sudo mv etcd etcdctl /usr/local/bin/
+etcd --version
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+Verify Spanshot by filename 
+sudo ETCDCTL_API=3 etcdctl snapshot status \
+/kubernetes/etcd-backups/etcd-2026-02-19-11-54.db -w table
+
+Verify Spanshot by Latest filename
+latest=$(ls -t /kubernetes/etcd-backups/etcd-*.db | head -1)
+sudo ETCDCTL_API=3 etcdctl snapshot status "$latest" -w table
+------------------------------------------------------------------------------------------------------------------------------------------
+1️⃣ Automate via Script
+/usr/local/bin/etcd-backup.sh
+
+#!/bin/bash
+
+BACKUP_DIR="/kubernetes/etcd-backups"
+DATE=$(date +%F-%H-%M)
+
+ETCDCTL_API=3 etcdctl snapshot save \
+${BACKUP_DIR}/etcd-${DATE}.db \
+--endpoints=https://127.0.0.1:2379 \
+--cacert=/etc/kubernetes/pki/etcd/ca.crt \
+--cert=/etc/kubernetes/pki/etcd/server.crt \
+--key=/etc/kubernetes/pki/etcd/server.key
+# keep last 7 days
+find ${BACKUP_DIR} -type f -mtime +7 -delete
+
+---------------------------------------------------------------------------------------------------------------------------------------
+chmod +x /usr/local/bin/etcd-backup.sh
+0 2 * * * /usr/local/bin/etcd-backup.sh >> /var/log/etcd-backup.log 2>&1
+sudo crontab -e
+sudo crontab -l
+
+
+
