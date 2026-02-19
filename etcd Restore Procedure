@@ -152,11 +152,11 @@ System pods running
 No CrashLoopBackOff
 
 7️⃣ Post-Restore Validation Checklist
-Validation	Command	Expected Result
-etcd healthy	etcdctl endpoint health	healthy
-3 members present	etcdctl member list	3 members
-API server accessible	kubectl get nodes	all Ready
-Workloads restored	kubectl get pods -A	Running
+Validation	                     Command	                          Expected Result
+etcd healthy	                  etcdctl endpoint health	                healthy
+3 members present	             etcdctl member list	                    3 members
+API server accessible	         kubectl get nodes	                      all Ready
+Workloads restored	            kubectl get pods -A	                    Running
 
 
 
