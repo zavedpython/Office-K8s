@@ -8,6 +8,9 @@ Server IP : 10.150.66.71
 🧹 Old backups >7 days deleted
 📝 Logs stored in /var/log/etcd-backup.log
 
+etcd Version    3.5.14
+Backup Path    /kubernetes/etcd-backups
+
 ----------------------------------------------------------------------------------------------------------------------------------
 🔹 Step 1: Download etcd
 ETCD_VER=v3.5.14
